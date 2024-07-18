@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  TestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: test_lambda_function.lambda_handler
+      Runtime: python3.10
+      CodeUri: lambda-local-test/
+      Layers:
+        - !Ref ObserveLayer
+      Environment:
+        Variables:
+          OBSERVE_ENDPOINT: ""
+          OBSERVE_API_KEY: ""
+  ObserveLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: observe_lambda_extension_telemetry_shipper
+      ContentUri: ./dist/
+      CompatibleRuntimes:
+        - python3.10

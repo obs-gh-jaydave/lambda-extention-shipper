@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -euo pipefail
+
+# Initialize the Python runtime and start the extension process
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/python-runtime/lang/lib:/var/lang/lib
+export PYTHONPATH=$PYTHONPATH:/opt/extension-python-modules:/opt/python-runtime/runtime:/var/lang/lib
+
+if [ -f /var/lang/bin/python ]; then
+    /var/lang/bin/python /opt/extension-python-modules/observe_lambda_extension_telemetry_shipper/extension_main.py
+else
+    /opt/python-runtime/lang/bin/python3.8 /opt/extension-python-modules/observe_lambda_extension_telemetry_shipper/extension_main.py
+fi

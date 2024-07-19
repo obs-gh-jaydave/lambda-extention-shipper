@@ -8,9 +8,24 @@ from datetime import datetime, timezone
 @pytest.fixture
 def sample_records():
     return [
-        TelemetryRecord(LogType.START, datetime(2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc), '{"aws_request_id":"123"}', {}),
-        TelemetryRecord(LogType.FUNCTION, datetime(2023, 1, 1, 0, 0, 1, tzinfo=timezone.utc), '{"aws_request_id":"123","message":"test"}', {}),
-        TelemetryRecord(LogType.END, datetime(2023, 1, 1, 0, 0, 2, tzinfo=timezone.utc), '{"aws_request_id":"123"}', {}),
+        TelemetryRecord(
+            record_type=LogType.START,
+            record_time=datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc),
+            record='{"aws_request_id":"123"}',
+            raw={}
+        ),
+        TelemetryRecord(
+            record_type=LogType.FUNCTION,
+            record_time=datetime(2023, 1, 1, 0, 0, 1, tzinfo=timezone.utc),
+            record='{"aws_request_id":"123"}',
+            raw={}
+        ),
+        TelemetryRecord(
+            record_type=LogType.END,
+            record_time=datetime(2023, 1, 1, 0, 0, 2, tzinfo=timezone.utc),
+            record='{"aws_request_id":"123"}',
+            raw={}
+        )
     ]
 
 def test_format_records(sample_records):
@@ -23,6 +38,8 @@ def test_format_records(sample_records):
     assert all(record["aws_request_id"] == "123" for record in formatted)
 
 @patch('requests.post')
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_endpoint', "https://test.observe.com/ingest")
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_api_key', "test-api-key")
 def test_send_to_observe(mock_post):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -42,6 +59,8 @@ def test_send_to_observe(mock_post):
     )
 
 @patch('requests.post')
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_endpoint', "https://test.observe.com/ingest")
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_api_key', "test-api-key")
 def test_handle_logs_success(mock_post, sample_records):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -54,6 +73,8 @@ def test_handle_logs_success(mock_post, sample_records):
     mock_post.assert_called_once()
 
 @patch('requests.post')
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_endpoint', "https://test.observe.com/ingest")
+@patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_api_key', "test-api-key")
 def test_handle_logs_failure(mock_post, sample_records):
     mock_response = Mock()
     mock_response.status_code = 500
@@ -66,8 +87,8 @@ def test_handle_logs_failure(mock_post, sample_records):
     mock_post.assert_called_once()
 
 def test_handle_logs_no_config(sample_records):
-    with patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration') as mock_config:
-        mock_config.observe_endpoint = None
+    with patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_endpoint', None), \
+         patch('observe_lambda_extension_telemetry_shipper.configuration.Configuration.observe_api_key', None):
         handler = ObserveHandler()
         result = handler.handle_logs(sample_records)
 
